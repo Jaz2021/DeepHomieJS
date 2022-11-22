@@ -1,12 +1,10 @@
 // Require the necessary discord.js classes
-const { Client, GatewayIntentBits } = require('discord.js');
-const { token, apiKey} = require('./config.json');
+const { Client } = require('discord.js');
+const { token} = require('./config.json');
 const { Collection } = require('discord.js');
 const path = require('node:path');
 const fs = require('node:fs');
 const playCommand = require('./commands/play.js');
-const he = require('he');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // Create a new client instance
 const client = new Client({ 
@@ -56,9 +54,8 @@ client.on('interactionCreate', async interaction => {
 		let link = items[0];
 		let title = items[1];
 
-		await voicePlayer.addToQueue(link, interaction.guild, title) ;
-
-		interaction.reply('Not yet implemented!');
+		voicePlayer.addToQueue(link, interaction.guild, title);
+		interaction.reply(`Added ${title} to queue`);
 	}
 	
 });

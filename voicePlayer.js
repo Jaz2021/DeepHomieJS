@@ -49,8 +49,6 @@ module.exports = {
                 console.error(`Error: ${error.message} with resource ${error.resource}`);
             });
             queue[guild.id]["audioPlayer"].on("stateChange", (stream) =>{
-                // console.log(stream.status);
-                // console.log(stream.resource["ended"]);
                 if(stream.resource !== undefined){
                     if(stream.resource["ended"] && !skipping){
                         // console.log("Stream has ended, onto next");
@@ -76,7 +74,6 @@ module.exports = {
                 console.error(`Error: ${error.message} with resource ${error.resource}`);
             });
             queue[guild.id]["audioPlayer"].on("stateChange", (stream) =>{
-                // console.log(stream.status);
                 // console.log(stream.resource["ended"]);
                 if(stream.resource !== undefined){
                     if(stream.resource["ended"] && !skipping){

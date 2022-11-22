@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Embed, SelectMenuInteraction} = require('discord.js');
+const {SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder} = require('discord.js');
 const { apiKey } = require('../config.json');
 const he = require('he');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -57,8 +57,12 @@ module.exports = {
                     //Max out the number as 5, this is the max buttons discordJS allows anyways
                     if(num < 5){
                         fields.push({name: `Option ${num + 1}`, value: `Title: ${he.decode(results["items"][num]['snippet']['title'])}\nChannel: ${he.decode(results["items"][num]['snippet']['channelTitle'])}`});
-    
-                        buttonItems.push(new ButtonBuilder().setCustomId(`https://www.youtube.com/watch?v=${results["items"][num]["id"]["videoId"]}|${he.decode(results["items"][num]['snippet']['title'])}`).setLabel((num + 1).toString()).setStyle(ButtonStyle.Primary))
+                        let id = `https://www.youtube.com/watch?v=${results["items"][num]["id"]["videoId"]}|${he.decode(results["items"][num]['snippet']['title'])}`;
+                        let trimmedString = id.length > 100 ? 
+                            id.substring(0, 96) + "..." : 
+                            id;
+                            // If string is greater than 100 characters long, trim it to size
+                        buttonItems.push(new ButtonBuilder().setCustomId(trimmedString).setLabel((num + 1).toString()).setStyle(ButtonStyle.Primary))
                     }
                     num += 1;
                 });
@@ -168,7 +172,6 @@ function validateYouTubeUrl(url)
     if (url != undefined || url != '') {
         var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\/|shorts\/|\?v=|\&v=|\?v=)([^#\&\?]*).*/;
         var match = url.match(regExp);
-        
         if (match && match[2].length == 11) {
             
             return true;
