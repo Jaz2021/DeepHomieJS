@@ -1,6 +1,7 @@
 const { SelectMenuOptionBuilder } = require('@discordjs/builders');
-const {VoiceConnectionStatus, entersState, createAudioPlayer, getVoiceConnection, joinVoiceChannel, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, AudioResource} = require('@discordjs/voice');
-const ytdl = require('ytdl-core');
+const {VoiceConnectionStatus, entersState, createAudioPlayer, getVoiceConnection, joinVoiceChannel, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, AudioResource, AudioPlayer, StreamType} = require('@discordjs/voice');
+// const ytdl = require('ytdl-core-discord');
+const play = require('play-dl');
 // const fs = require('fs');
 // const path = require('node:path');
 // const play = require('./commands/play');
@@ -8,6 +9,10 @@ const ytdl = require('ytdl-core');
 var textEnabled = new Object();
 var queue = new Object();
 var skipping = false;
+const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+    const newUdp = Reflect.get(newNetworkState, 'udp');
+    clearInterval(newUdp?.keepAliveInterval);
+  }
 module.exports = {
     async setConnection(voiceChannel){
         let channel = voiceChannel.id;
@@ -22,6 +27,7 @@ module.exports = {
             //I honestly have no idea if this works the way i think it does
             connection.on(VoiceConnectionStatus.Disconnected, async(oldState, newState) => {
             try {
+
                 await Promise.race([
                     entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
                     enterState(connection, VoiceConnectionStatus.Signalling, 5_000),
@@ -30,28 +36,42 @@ module.exports = {
                 connection.destroy();
                 console.log("Connection destroyed");
             }
+            connection.on('stateChange', (oldState, newState) => {
+                console.log(`${oldState}, ${newState}`);
+                const oldNetworking = Reflect.get(oldState, 'networking');
+                const newNetworking = Reflect.get(newState, 'networking');
+              
+                oldNetworking?.off('stateChange', networkStateChangeHandler);
+                newNetworking?.on('stateChange', networkStateChangeHandler);
+              });
         })
     
     },
-    async addToQueue(vidLink, guild, name){
+    async addToQueue(vidLink, guild, name, seek = 0){
         // var connection = getVoiceConnection(guild.id);
         let PlayAtEnd = false;
         if(!queue.hasOwnProperty(guild.id)){
             var player = await createAudioPlayer({
                 behaviors: {
-                    noSubscriber: NoSubscriberBehavior.Pause    
+                    noSubscriber: NoSubscriberBehavior.Play   
                     }
                 }
             );
             queue[guild.id] = {current: 0, audioPlayer: player, resource: [], paused: false, items: [], looping: false};
             await getVoiceConnection(guild.id).subscribe(queue[guild.id]["audioPlayer"]);
             queue[guild.id]["audioPlayer"].on('error', error => {
-                console.error(`Error: ${error.message} with resource ${error.resource}`);
+                console.error(`Error: ${error.message} with resource`);
+                this.skipInQueue(guild,1);
+                
             });
-            queue[guild.id]["audioPlayer"].on("stateChange", (stream) =>{
-                if(stream.resource !== undefined){
-                    if(stream.resource["ended"] && !skipping){
-                        // console.log("Stream has ended, onto next");
+            
+            queue[guild.id]["audioPlayer"].on("stateChange", (stream, newsteam) =>{
+                if(stream.resource != undefined){
+                    // console.log(stream.resource["ended"]);
+                    console.log(newsteam.status);
+
+                    if(stream.resource["ended"] == true && !skipping){
+                        console.log("Stream has ended, onto next");
                         this.skipInQueue(guild,1);
                     }
                 }
@@ -73,11 +93,13 @@ module.exports = {
             queue[guild.id]["audioPlayer"].on('error', error => {
                 console.error(`Error: ${error.message} with resource ${error.resource}`);
             });
-            queue[guild.id]["audioPlayer"].on("stateChange", (stream) =>{
-                // console.log(stream.resource["ended"]);
+            queue[guild.id]["audioPlayer"].on("stateChange", (stream, newsteam) =>{
+                // console.log("test");
+                console.log(newsteam.status);
+
                 if(stream.resource !== undefined){
-                    if(stream.resource["ended"] && !skipping){
-                        // console.log("Stream has ended, onto next");
+                    if(stream.resource["ended"] == true && !skipping){
+                        console.log("Stream has ended, onto next");
                         this.skipInQueue(guild, 1);
                     }
                 }
@@ -90,14 +112,13 @@ module.exports = {
 
         queue[guild.id]["items"].push({title: name, link: vidLink});
         // Add the video link and title to the items to be able to be grabbed by the nowPlaying command
-        let vid = ytdl(vidLink, {filter: 'audioonly', dlChunkSize: 0, highWaterMark: 1 << 30});
         //Download the video, idk what highwatermark does but it was something necessary to make this work.
-        queue[guild.id]["resource"].push(createAudioResource(vid));
-
+        // queue[guild.id]["resource"].push(createAudioResource(await ytdl(vidLink), {inputType: StreamType.Opus}));
+        let source = await play.stream(vidLink, {seek: seek});
+        queue[guild.id]["resource"].push(createAudioResource(source.stream, {inputType: source.type}))
 
         if(PlayAtEnd){
-            
-            // await sleep(5000);
+        
             queue[guild.id]["audioPlayer"].play(queue[guild.id]["resource"][0]);
             
             // console.log(queue[guild.id]["resource"][0]);
@@ -189,7 +210,7 @@ module.exports = {
             // Always make sure there even is a queue for the guild
             if(num > 0){
                 // Make sure the number to skip is at least 1
-                console.log(`Skipping ${num} tracks`);
+                // console.log(`Skipping ${num} tracks`);
                 skipping = true;
                 // Increment current by num
                 let current = queue[guild.id]["current"] + num;
@@ -197,12 +218,12 @@ module.exports = {
                     let current = current % queue[guild.id]['items'].length;
 
                 }
+
                 if(queue[guild.id]["items"][current] === undefined){
                     // Check if there is an item if you increase by num
                     // If not stop the queue
+
                     stopQueue(guild);
-                    // console.log("WHY DOES THIS HATE ME");
-                    // Why is this not a function??
                     // If so stop the queue
                 } else {
                     //Otherwise we need to delete those songs we skipped and set up a new audioResource

@@ -5,6 +5,7 @@ module.exports = {
     .setDescription('Loop the current playlist')
     .addIntegerOption(option => option.setName('count').setDescription('The number of times to loop')),
     async execute(interaction){
+        
         await interaction.reply('Not yet implemented!');
     }
 };
