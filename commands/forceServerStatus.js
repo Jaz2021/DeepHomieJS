@@ -5,14 +5,14 @@ module.exports = {
     .setName('force_server_status')
     .setDescription('Manually set the server to online after the bot crashes')
     .addIntegerOption(option => option.setName('time').setDescription('How much time to keep online.').setRequired(true))
-    .addIntegerOption(option => option.setName('server').setDescription("Which server to add time to").addChoices({name: "vault_hunters", value: 0}, {name: "create_astral", value: 1}, {name: "vanilla", value: 2}).setRequired(true))
+    .addIntegerOption(option => option.setName('server').setDescription("Which server to add time to").addChoices({name: "blightfall", value: 0}, {name: "create_astral", value: 1}, {name: "vanilla", value: 2}).setRequired(true))
     .addIntegerOption(option => option.setName('unit').setDescription('Whether you are adding minutes, or hours. (Default: minutes)').addChoices({name: "minutes", value: 1}, {name: "hours", value: 60})),
     async execute(interaction){
         let server = "";
         serverInt = interaction.options.getInteger('server');
 
         if(serverInt == 0){
-            server = "vault";
+            server = "blightfall";
         } else if(serverInt == 1){
             server = "create";
         } else {
