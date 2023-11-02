@@ -42,18 +42,11 @@ config.json
 <<<<<<< HEAD
 node_modules
 .data
-startServer.js
-stopServer.js
-addServerTime.js
 TestScript.js
-bashScripts
-serverTimer.js
-getServerTime.js
-=======
+
 *.pub
 # Any folders in modules #
 ##########################
 node_modules/
 modules/*
-
->>>>>>> 2a3b458 (Removed data)
+!modules/readme.txt
