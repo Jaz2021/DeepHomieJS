@@ -19,11 +19,37 @@ for (const file of commandFiles) {
     const command = require(filePath);
     commands.push(command.data.toJSON());
 }
+const modulesPath = path.join(__dirname, "modules")
+const modulesFolders = fs.readdirSync(modulesPath).filter(file => !file.endsWith(".txt"))
+// console.log(modulesFolders)
+console.log("--------------------------------------------------")
+for (const folder of modulesFolders){
+    const folderPath = path.join(modulesPath, folder)
+    // console.log(folderPath)
+    const cmdPath = path.join(folderPath, "commands")
+    let moduleCommands = fs.readdirSync(cmdPath).filter(file => file.endsWith(".js"))
+    // Check for any commands within the commands subfolder in the module
+    // console.log(moduleCommands)
+    const initPath = path.join(modulesPath, folder,  "init.js")
+    const initCmd = require(initPath)
+    initCmd.init();
+    for (const cmd of moduleCommands){
+        // console.log(cmd)
+        const filePath = path.join(folderPath, "commands", cmd)
+        const command = require(filePath)
+        commands.push(command.data.toJSON())
+    }
     
+}
+console.log("--------------------------------------------------")
 
-const rest = new REST({ version: '10' }).setToken(token);
-// Hello there
-rest.put(
+
+
+async () => {
+    const rest = await new REST({ version: '10' }).setToken(token);
+    rest.put(
     Routes.applicationCommands(clientId),
     {body: commands},
-);
+);}
+console.log("Successfully deployed commands")
+

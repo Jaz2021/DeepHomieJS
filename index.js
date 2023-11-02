@@ -5,7 +5,12 @@ const { Collection } = require('discord.js');
 const path = require('node:path');
 const fs = require('node:fs');
 const playCommand = require('./commands/play.js');
-
+const deply = require("./deply-commands")
+function sleep(ms) {
+    const start = Date.now();
+    while (Date.now() - start < ms) {}
+}
+sleep(10000)
 // Create a new client instance
 const client = new Client({ 
 	intents: ['DirectMessages', 'DirectMessageReactions', 'GuildMessages', 'GuildMessageReactions', 'Guilds', 'MessageContent', 'GuildVoiceStates']
@@ -21,6 +26,28 @@ for (const file of commandFiles) {
 	// With the key as the command name and the value as the exported module
 	client.commands.set(command.data.name, command);
 	// console.log(command.data.name);
+}
+const modulesPath = path.join(__dirname, "modules")
+const modulesFolders = fs.readdirSync(modulesPath).filter(file => !file.endsWith(".txt"))
+// console.log(modulesFolders)
+console.log("--------------------------------------------------")
+for (const folder of modulesFolders){
+	const folderPath = path.join(modulesPath, folder)
+    // console.log(folderPath)
+    const cmdPath = path.join(folderPath, "commands")
+	let moduleCommands = fs.readdirSync(cmdPath).filter(file => file.endsWith(".js"))
+	// Check for any commands within the commands subfolder in the module
+    // console.log(moduleCommands)
+    const initPath = path.join(modulesPath, folder,  "init.js")
+	const initCmd = require(initPath)
+	initCmd.init();
+	for (const cmd of moduleCommands){
+        // console.log(cmd)
+		const filePath = path.join(folderPath, "commands", cmd)
+		const command = require(filePath)
+		client.commands.set(command.data.name, command)
+	}
+	
 }
 client.on('interactionCreate', async interaction => {
 	// console.log("test");
@@ -94,12 +121,16 @@ client.on('messageCreate', async message => {
 // When the client is ready, run this code (only once)
 client.once('ready', () => {
 	console.log('Ready!');
+	console.log("--------------------------------------------------")
+
 });
 function getYoutubeId(url){
     var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\/|shorts\/|\?v=|\&v=|\?v=)([^#\&\?]*).*/;
     return url.match(regExp)[2];
 }
+
 // Login to Discord with your client's token
+
 console.log(generateDependencyReport());
 
 client.login(token);
