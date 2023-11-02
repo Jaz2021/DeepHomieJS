@@ -39,6 +39,7 @@ Thumbs.db
 # Specific Files #
 ##################
 config.json
+<<<<<<< HEAD
 node_modules
 .data
 startServer.js
@@ -48,3 +49,11 @@ TestScript.js
 bashScripts
 serverTimer.js
 getServerTime.js
+=======
+*.pub
+# Any folders in modules #
+##########################
+node_modules/
+modules/*
+
+>>>>>>> 2a3b458 (Removed data)
