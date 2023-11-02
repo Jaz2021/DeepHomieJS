@@ -22,7 +22,7 @@ for (const file of commandFiles) {
     
 
 const rest = new REST({ version: '10' }).setToken(token);
-
+// Hello there
 rest.put(
     Routes.applicationCommands(clientId),
     {body: commands},
